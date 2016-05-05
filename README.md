@@ -21,6 +21,10 @@ See the [service files](https://github.com/jstnhuang/mongo_msg_db_msgs/tree/mast
 cd ~/catkin_ws/src
 git clone https://github.com/jstnhuang/mongo_msg_db_msgs.git
 git clone https://github.com/jstnhuang/mongo_msg_db.git
+cd ~/catkin_ws/src/mongo_msg_db
+pip install -r requirements.txt
+cd ~/catkin_ws
+rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
 catkin build
 ```
 
