@@ -63,6 +63,7 @@ before_script:
 script:
     - cd ~/catkin_ws/src/mongo_msg_db
     - catkin build
+    - source ~/catkin_ws/devel/setup.bash
     - nosetests --with-coverage --cover-package mongo_msg_db
 
 after-success:
