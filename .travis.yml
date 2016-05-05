@@ -57,6 +57,7 @@ install:
 
 before_script:
     - sleep 15
+    - mongo test --eval 'db.addUser("travis", "test");'
 
 # Command to run tests
 # --------------------
