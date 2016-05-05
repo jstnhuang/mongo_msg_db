@@ -163,3 +163,25 @@ def testUpdate():
     doc = mongo_client.test.commands.find_one(
         {'_id': ObjectId(insert_response.id)})
     assert_equals(doc['json'], request2.message.json)
+
+def testMultipleCollections():
+    mongo_client = MongoClient()
+    mongo_client.drop_database('test')
+    db = MessageDb(mongo_client)
+
+    insert_request = InsertRequest()
+    insert_request.collection.db = 'test'
+    insert_request.collection.collection = 'commands'
+    insert_request.msg_type = 'std_msgs/String'
+    insert_request.json = json.dumps({'data': 'Hello'})
+    insert_response = db.insert(insert_request)
+   
+    insert_request = InsertRequest()
+    insert_request.collection.db = 'test'
+    insert_request.collection.collection = 'commands2'
+    insert_request.msg_type = 'std_msgs/String'
+    insert_request.json = json.dumps({'data': 'World'})
+    insert_response = db.insert(insert_request)
+
+    assert_equals(mongo_client.test.commands.count(), 1) 
+    assert_equals(mongo_client.test.commands2.count(), 1) 
