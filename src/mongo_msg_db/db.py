@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 from bson.objectid import ObjectId
 from pymongo import MongoClient
-import datetime
-import pymongo
-import rospy
 
 from mongo_msg_db_msgs.msg import Collection
 from mongo_msg_db_msgs.msg import Message
-from mongo_msg_db_msgs.srv import Delete, DeleteResponse
-from mongo_msg_db_msgs.srv import Find, FindResponse
-from mongo_msg_db_msgs.srv import Insert, InsertResponse
-from mongo_msg_db_msgs.srv import List, ListResponse
-from mongo_msg_db_msgs.srv import Update, UpdateResponse
-from rospy_message_converter import json_message_converter
+from mongo_msg_db_msgs.srv import DeleteResponse
+from mongo_msg_db_msgs.srv import FindResponse
+from mongo_msg_db_msgs.srv import InsertResponse
+from mongo_msg_db_msgs.srv import ListResponse
+from mongo_msg_db_msgs.srv import UpdateResponse
 
 
 class MessageDb(object):
@@ -76,19 +72,3 @@ class MessageDb(object):
         response = UpdateResponse()
         response.matched_count = result.matched_count
         return response
-
-
-def main():
-    rospy.init_node('mongo_msg_db')
-    mongo_client = MongoClient()
-    database = MessageDb(mongo_client)
-    rospy.Service('delete', Delete, database.handle_delete)
-    rospy.Service('find', Find, database.handle_get)
-    rospy.Service('insert', Insert, database.handle_insert)
-    rospy.Service('list', List, database.handle_list)
-    rospy.Service('update', Update, database.handle_update)
-    rospy.spin()
-
-
-if __name__ == '__main__':
-    main()
