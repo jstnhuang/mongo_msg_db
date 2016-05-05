@@ -36,6 +36,8 @@ install:
     - sudo apt-get install -qq -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin ros-$ROS_DISTRO-ros
     - sudo pip install -U setuptools
     - sudo pip install -U catkin_tools
+    - pip install coverage
+    - pip install coveralls
     - source /opt/ros/$ROS_DISTRO/setup.bash
     # Setup rosdep
     - sudo rosdep init
@@ -51,8 +53,6 @@ install:
     # Install dependencies
     - cd ~/catkin_ws/
     - rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
-    # Build
-    - catkin build
 
 before_script:
     - sleep 15
@@ -61,6 +61,9 @@ before_script:
 # Command to run tests
 # --------------------
 script:
-    - cd ~/catkin_ws
-    - catkin run_tests
-    - catkin_test_results build/mongo_msg_db
+    - cd ~/catkin_ws/src/mongo_msg_db
+    - catkin build
+    - nosetests --with-coverage --cover-package mongo_msg_db
+
+after-success:
+    - coveralls
