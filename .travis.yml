@@ -44,6 +44,8 @@ install:
     # Create workspace.
     - mkdir -p ~/catkin_ws/src
     - cd ..; mv mongo_msg_db ~/catkin_ws/src
+    - cd ~/catkin_ws/src/mongo_msg_db
+    - pip install -r requirements.txt
     - cd ~/catkin_ws/src
     - git clone https://github.com/jstnhuang/mongo_msg_db_msgs.git
     - catkin_init_workspace
