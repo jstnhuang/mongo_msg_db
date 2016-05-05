@@ -55,6 +55,9 @@ install:
     # Build
     - catkin build
 
+before_script:
+    - sleep 15
+
 # Command to run tests
 # --------------------
 script:
