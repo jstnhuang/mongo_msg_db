@@ -1,5 +1,6 @@
 # mongo_msg_db
 [![Build Status](https://travis-ci.org/jstnhuang/mongo_msg_db.svg?branch=master)](https://travis-ci.org/jstnhuang/mongo_msg_db)
+[![Coverage Status](https://coveralls.io/repos/github/jstnhuang/mongo_msg_db/badge.svg?branch=master)](https://coveralls.io/github/jstnhuang/mongo_msg_db?branch=master)
 
 A simple MongoDB database for flat collections of ROS messages.
 
