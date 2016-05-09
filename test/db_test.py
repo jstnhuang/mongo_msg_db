@@ -125,6 +125,7 @@ def testList():
     insert_response = db.insert(insert_request)
     response = db.list(request)
     assert_equals(len(response.messages), 1)
+    assert_equals(response.messages[0].id, insert_response.id)
 
     insert_request.json = json.dumps({'data': 'World'})
     insert_response = db.insert(insert_request)

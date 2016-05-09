@@ -55,7 +55,7 @@ class MessageDb(object):
         response = ListResponse()
         for msg in result:
             message = Message()
-            message.id = msg['_id']
+            message.id = str(msg['_id'])
             message.msg_type = msg['msg_type']
             message.json = msg['json']
             response.messages.append(message)
