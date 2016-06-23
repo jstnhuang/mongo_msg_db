@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 from bson.objectid import ObjectId
 from mongo_msg_db import MessageDb
+from mongo_msg_db import RosMessageDb
 from mongo_msg_db_msgs.msg import Collection
 from mongo_msg_db_msgs.srv import DeleteRequest
 from mongo_msg_db_msgs.srv import FindRequest
@@ -33,7 +34,8 @@ def testCollection():
 def testDelete():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
-    db = MessageDb(mongo_client)
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
 
     request = InsertRequest()
     request.collection.db = 'test'
@@ -59,7 +61,8 @@ def testDelete():
 def testFind():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
-    db = MessageDb(mongo_client)
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
 
     request = FindRequest()
     request.collection.db = 'test'
@@ -93,7 +96,8 @@ def testFind():
 def testInsert():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
-    db = MessageDb(mongo_client)
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
 
     request = InsertRequest()
     request.collection.db = 'test'
@@ -109,7 +113,8 @@ def testInsert():
 def testList():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
-    db = MessageDb(mongo_client)
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
 
     request = ListRequest()
     request.collection.db = 'test'
@@ -136,7 +141,8 @@ def testList():
 def testUpdate():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
-    db = MessageDb(mongo_client)
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
 
     request1 = UpdateRequest()
     request1.collection.db = 'test'
@@ -168,7 +174,8 @@ def testUpdate():
 def testMultipleCollections():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
-    db = MessageDb(mongo_client)
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
 
     insert_request = InsertRequest()
     insert_request.collection.db = 'test'
