@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from bson.objectid import ObjectId
 from pymongo import MongoClient
+from rospy_message_converter import json_message_converter as jmc
 
 from mongo_msg_db_msgs.msg import Collection
 from mongo_msg_db_msgs.msg import Message
@@ -35,6 +36,11 @@ class MessageDb(object):
         result = collection.delete_one({'_id': ObjectId(id)})
         return result.deleted_count
 
+    def find_msg(self, collection, id):
+        matched_count, message = self.find(collection, id)
+        msg = jmc.convert_json_to_ros_message(message.msg_type, message.json)
+        return matched_count, msg
+
     def find(self, collection, id):
         """Finds a message in a collection.
 
@@ -57,6 +63,10 @@ class MessageDb(object):
             message.json = result['json']
         return matched_count, message
 
+    def insert_msg(self, collection, msg):
+        return self.insert(collection, jmc.convert_ros_message_to_json(msg),
+                           msg._type)
+
     def insert(self, collection, json, msg_type):
         """Inserts a message into a collection.
 
@@ -69,6 +79,11 @@ class MessageDb(object):
         collection = self._collection(collection)
         result = collection.insert_one({'msg_type': msg_type, 'json': json})
         return str(result.inserted_id)
+
+    def list_msgs(self, collection):
+        response = self.list(collection)
+        return [jmc.convert_json_to_ros_message(x.msg_type, x.json)
+                for x in response]
 
     def list(self, collection):
         """Lists all messages in a collection.

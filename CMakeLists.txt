@@ -7,6 +7,7 @@ project(mongo_msg_db)
 find_package(catkin REQUIRED COMPONENTS
   mongo_msg_db_msgs
   rospy
+  rospy_message_converter
 )
 
 ## System dependencies are found with CMake's conventions
@@ -101,7 +102,10 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES mongo_msg_db
-#  CATKIN_DEPENDS mongo_msg_db_msgs rospy
+  CATKIN_DEPENDS
+    mongo_msg_db_msgs
+    rospy
+    rospy_message_converter
 #  DEPENDS system_lib
 )
 
