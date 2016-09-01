@@ -38,6 +38,8 @@ class MessageDb(object):
 
     def find_msg(self, collection, id):
         matched_count, message = self.find(collection, id)
+        if matched_count == 0 or message is None:
+            return matched_count, message
         msg = jmc.convert_json_to_ros_message(message.msg_type, message.json)
         return matched_count, msg
 
