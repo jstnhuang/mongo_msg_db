@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+import datetime
 from bson.objectid import ObjectId
+import pymongo
 from pymongo import MongoClient
 from rospy_message_converter import json_message_converter as jmc
 
@@ -79,7 +81,11 @@ class MessageDb(object):
         Returns: The ObjectId of the inserted item, as a string.
         """
         collection = self._collection(collection)
-        result = collection.insert_one({'msg_type': msg_type, 'json': json})
+        now = datetime.datetime.now()
+        result = collection.insert_one(
+            {'modified_time': now,
+             'msg_type': msg_type,
+             'json': json})
         return str(result.inserted_id)
 
     def list_msgs(self, collection):
@@ -95,7 +101,7 @@ class MessageDb(object):
         Returns: A list of mongo_msg_db_msgs.msg.Message
         """
         collection = self._collection(collection)
-        result = collection.find()
+        result = collection.find().sort('modified_time', pymongo.DESCENDING)
         response = []
         for msg in result:
             message = Message()
@@ -116,7 +122,12 @@ class MessageDb(object):
         Returns: 1 if the message was updated, 0 if it was not found.
         """
         collection = self._collection(collection)
-        msg = {'msg_type': message.msg_type, 'json': message.json}
+        now = datetime.datetime.now()
+        msg = {
+            'modified_time': now,
+            'msg_type': message.msg_type,
+            'json': message.json
+        }
         result = collection.replace_one({'_id': ObjectId(message.id)}, msg)
         return result.matched_count
 
