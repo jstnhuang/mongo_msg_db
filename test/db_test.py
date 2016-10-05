@@ -3,10 +3,15 @@ from bson.objectid import ObjectId
 from mongo_msg_db import MessageDb
 from mongo_msg_db import RosMessageDb
 from mongo_msg_db_msgs.msg import Collection
+from mongo_msg_db_msgs.msg import Message
+from mongo_msg_db_msgs.msg import MessageEvent
+from mongo_msg_db_msgs.msg import MessageList
 from mongo_msg_db_msgs.srv import DeleteRequest
 from mongo_msg_db_msgs.srv import FindRequest
 from mongo_msg_db_msgs.srv import InsertRequest
 from mongo_msg_db_msgs.srv import ListRequest
+from mongo_msg_db_msgs.srv import SubscribeRequest
+from mongo_msg_db_msgs.srv import SubscribeToListRequest
 from mongo_msg_db_msgs.srv import UpdateRequest
 from pymongo import MongoClient
 import json
@@ -171,6 +176,7 @@ def testUpdate():
         {'_id': ObjectId(insert_response.id)})
     assert_equals(doc['json'], request2.message.json)
 
+
 def testMultipleCollections():
     mongo_client = MongoClient()
     mongo_client.drop_database('test')
@@ -183,7 +189,7 @@ def testMultipleCollections():
     insert_request.msg_type = 'std_msgs/String'
     insert_request.json = json.dumps({'data': 'Hello'})
     insert_response = db.insert(insert_request)
-   
+
     insert_request = InsertRequest()
     insert_request.collection.db = 'test'
     insert_request.collection.collection = 'commands2'
@@ -191,5 +197,131 @@ def testMultipleCollections():
     insert_request.json = json.dumps({'data': 'World'})
     insert_response = db.insert(insert_request)
 
-    assert_equals(mongo_client.test.commands.count(), 1) 
-    assert_equals(mongo_client.test.commands2.count(), 1) 
+    assert_equals(mongo_client.test.commands.count(), 1)
+    assert_equals(mongo_client.test.commands2.count(), 1)
+
+
+@mock.patch('rospy.Publisher')
+def testSubscribe(Publisher):
+    mongo_client = MongoClient()
+    mongo_client.drop_database('test')
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
+
+    insert_request = InsertRequest()
+    insert_request.collection.db = 'test'
+    insert_request.collection.collection = 'commands'
+    insert_request.msg_type = 'std_msgs/String'
+    insert_request.json = json.dumps({'data': 'Hello'})
+    insert_response = db.insert(insert_request)
+
+    subscribe_request = SubscribeRequest()
+    subscribe_request.collection.db = 'test'
+    subscribe_request.collection.collection = 'commands'
+    subscribe_request.id = insert_response.id
+    subscribe_response = db.subscribe(subscribe_request)
+
+    topic = 'mongo_msg_db/test/commands/{}'.format(insert_response.id)
+    assert subscribe_response.topic == topic
+    assert subscribe_response.error is None
+
+    inserted_message = Message(id=insert_response.id,
+                               json=insert_request.json,
+                               msg_type='std_msgs/String')
+    event = MessageEvent(event=MessageEvent.UPDATE, message=inserted_message)
+    mdb._publishers[insert_response.id].publish.assert_called_with(event)
+
+    update_request = UpdateRequest()
+    update_request.collection.db = 'test'
+    update_request.collection.collection = 'commands'
+    update_request.message.id = insert_response.id
+    update_request.message.json = json.dumps({'data': 'World'})
+    update_request.message.msg_type = 'std_msgs/String'
+    update_response = db.update(update_request)
+
+    # Expected update event to be published
+    event = MessageEvent(event=MessageEvent.UPDATE,
+                         message=update_request.message)
+    mdb._publishers[insert_response.id].publish.assert_called_with(event)
+
+    delete_request = DeleteRequest()
+    delete_request.collection.db = 'test'
+    delete_request.collection.collection = 'commands'
+    delete_request.id = insert_response.id
+    delete_response = db.delete(delete_request)
+
+    # Expected delete event to be published
+    empty = Message()
+    event = MessageEvent(event=MessageEvent.DELETE, message=empty)
+    mdb._publishers[insert_response.id].publish.assert_called_with(event)
+
+
+@mock.patch('rospy.Publisher')
+def testSubscribeList(Publisher):
+    mongo_client = MongoClient()
+    mongo_client.drop_database('test')
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
+
+    insert_request = InsertRequest()
+    insert_request.collection.db = 'test'
+    insert_request.collection.collection = 'commands'
+    insert_request.msg_type = 'std_msgs/String'
+    insert_request.json = json.dumps({'data': 'Hello'})
+    insert_response = db.insert(insert_request)
+
+    subscribe_request = SubscribeToListRequest()
+    subscribe_request.collection.db = 'test'
+    subscribe_request.collection.collection = 'commands'
+    subscribe_response = db.subscribe_to_list(subscribe_request)
+
+    topic = 'mongo_msg_db/test/commands'
+    assert subscribe_response.topic == topic
+    assert subscribe_response.error is None
+
+    inserted_message = Message(id=insert_response.id,
+                               json=insert_request.json,
+                               msg_type='std_msgs/String')
+    msg_list = MessageList(messages=[inserted_message])
+    mdb._list_publishers['test', 'commands'].publish.assert_called_with(
+        msg_list)
+
+    update_request = UpdateRequest()
+    update_request.collection.db = 'test'
+    update_request.collection.collection = 'commands'
+    update_request.message.id = insert_response.id
+    update_request.message.json = json.dumps({'data': 'World'})
+    update_request.message.msg_type = 'std_msgs/String'
+    update_response = db.update(update_request)
+
+    # Expected updated list to be published
+    msg_list = MessageList(messages=[update_request.message])
+    mdb._list_publishers['test', 'commands'].publish.assert_called_with(
+        msg_list)
+
+    delete_request = DeleteRequest()
+    delete_request.collection.db = 'test'
+    delete_request.collection.collection = 'commands'
+    delete_request.id = insert_response.id
+    delete_response = db.delete(delete_request)
+
+    # Expected empty list to the published
+    msg_list = MessageList()
+    mdb._list_publishers['test', 'commands'].publish.assert_called_with(
+        msg_list)
+
+@mock.patch('rospy.Publisher')
+def testSubscribeFailure(Publisher):
+    mongo_client = MongoClient()
+    mongo_client.drop_database('test')
+    mdb = MessageDb(mongo_client)
+    db = RosMessageDb(mdb)
+
+    subscribe_request = SubscribeRequest()
+    subscribe_request.collection.db = 'test'
+    subscribe_request.collection.collection = 'commands'
+    subscribe_request.id = str(ObjectId())
+    subscribe_response = db.subscribe(subscribe_request)
+
+    assert subscribe_response.topic is None
+    assert subscribe_response.error is not None

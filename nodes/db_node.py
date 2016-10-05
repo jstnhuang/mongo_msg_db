@@ -7,8 +7,9 @@ from mongo_msg_db_msgs.srv import Delete
 from mongo_msg_db_msgs.srv import Find
 from mongo_msg_db_msgs.srv import Insert
 from mongo_msg_db_msgs.srv import List
+from mongo_msg_db_msgs.srv import Subscribe
+from mongo_msg_db_msgs.srv import SubscribeToList
 from mongo_msg_db_msgs.srv import Update
-
 
 def main():
     rospy.init_node('mongo_msg_db')
@@ -20,6 +21,8 @@ def main():
     rospy.Service('~insert', Insert, database.insert)
     rospy.Service('~list', List, database.list)
     rospy.Service('~update', Update, database.update)
+    rospy.Service('~subscribe', Subscribe, database.subscribe)
+    rospy.Service('~subscribe_to_list', SubscribeToList, database.subscribe_to_list)
     rospy.spin()
 
 
