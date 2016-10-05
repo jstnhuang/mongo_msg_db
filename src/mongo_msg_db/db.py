@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+import datetime
 from bson.objectid import ObjectId
+import pymongo
 from pymongo import MongoClient
 from rospy_message_converter import json_message_converter as jmc
 
@@ -59,6 +61,8 @@ class MessageDb(object):
 
     def find_msg(self, collection, id):
         matched_count, message = self.find(collection, id)
+        if matched_count == 0 or message is None:
+            return matched_count, message
         msg = jmc.convert_json_to_ros_message(message.msg_type, message.json)
         return matched_count, msg
 
@@ -98,8 +102,11 @@ class MessageDb(object):
         Returns: The ObjectId of the inserted item, as a string.
         """
         mongo_collection = self._collection(collection)
+        now = datetime.datetime.now()
         result = mongo_collection.insert_one(
-            {'msg_type': msg_type,
+            {
+                'modified_time': now,
+                'msg_type': msg_type,
              'json': json})
 
         key = self._collection_key(collection)
@@ -123,7 +130,7 @@ class MessageDb(object):
         Returns: A list of mongo_msg_db_msgs.msg.Message
         """
         collection = self._collection(collection)
-        result = collection.find()
+        result = collection.find().sort('modified_time', pymongo.DESCENDING)
         response = []
         for msg in result:
             message = Message()
@@ -203,7 +210,8 @@ class MessageDb(object):
         Returns: 1 if the message was updated, 0 if it was not found.
         """
         mongo_collection = self._collection(collection)
-        msg = {'msg_type': message.msg_type, 'json': message.json}
+        now = datetime.datetime.now()
+        msg = {'modified_time': now, 'msg_type': message.msg_type, 'json': message.json}
         result = mongo_collection.replace_one({'_id': ObjectId(message.id)},
                                               msg)
         if message.id in self._publishers:
